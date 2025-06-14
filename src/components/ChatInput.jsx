@@ -1,23 +1,26 @@
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+// ChatInput.js
+import React from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import FilePicker from './FilePicker';
 
-const ChatInput = ({ newMessage, handleTyping, sendMessage }) => {
-    return (
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={newMessage}
-          onChangeText={handleTyping}
-          placeholder="Type a message..."
-        />
-        <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-          <Text style={{ color: '#fff' }}>Send</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
+const ChatInput = ({ newMessage, handleTyping, sendMessage, onFileSelect }) => {
+  return (
+    <View style={styles.inputContainer}>
+      <TextInput
+        style={styles.input}
+        value={newMessage}
+        onChangeText={handleTyping}
+        placeholder="Type a message..."
+      />
+      <FilePicker onFileSelect={onFileSelect} />
+      <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
+        <Text style={{ color: '#fff' }}>Send</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
-export default ChatInput
+export default ChatInput;
 
 const styles = StyleSheet.create({
   inputContainer: {
@@ -39,4 +42,4 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginLeft: 5,
   },
-})
+});

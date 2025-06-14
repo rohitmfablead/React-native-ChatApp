@@ -1,3 +1,4 @@
+
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -8,13 +9,11 @@ import {
   ActivityIndicator,
   StyleSheet,
   Switch,
-  SafeAreaView,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Header from '../components/Header';
 
-import LinearGradient from 'react-native-linear-gradient';
-import Header from '../components/Header1';
 
 const HomeScreen = ({navigation}) => {
   const [users, setUsers] = useState([]);
@@ -40,6 +39,7 @@ const HomeScreen = ({navigation}) => {
         setCurrentUser(parsedUser);
       }
     };
+
     getCurrentUser();
   }, []);
 
@@ -57,7 +57,47 @@ const HomeScreen = ({navigation}) => {
         userList = userList.filter(user => user.email !== currentUser.email);
         setUsers(userList);
 
+        const chatListeners = userList.map(user => {
+          if (!user.id) return null;
+
+          const chatId = [currentUser.uid, user.id].sort().join('_');
+          const chatRef = firestore().collection('chats').doc(chatId);
+
+          return chatRef.onSnapshot(chatSnap => {
+            let lastMessage = '';
+            let lastMessageTimestamp = null;
+            let unreadCount = 0;
+            let isTyping = false;
+
+            if (chatSnap.exists) {
+              const chatData = chatSnap.data();
+              lastMessage = chatData.lastMessage || '';
+              lastMessageTimestamp = chatData.lastMessageTimestamp || null;
+              unreadCount = chatData[`unreadCount_${currentUser.uid}`] || 0;
+              isTyping = chatData[`typing_${user.id}`] || false;
+            }
+
+            setUsers(prevUsers =>
+              prevUsers.map(u =>
+                u.id === user.id
+                  ? {
+                      ...u,
+                      lastMessage,
+                      lastMessageTimestamp,
+                      unreadCount,
+                      isTyping,
+                    }
+                  : u,
+              ),
+            );
+          });
+        });
+
         setLoading(false);
+
+        return () => {
+          chatListeners.forEach(unsub => unsub && unsub());
+        };
       });
 
     return () => unsubscribeUsers();
@@ -76,16 +116,15 @@ const HomeScreen = ({navigation}) => {
   };
 
   return (
-    <LinearGradient
-      colors={darkMode ? ['#121212', '#1f1f1f'] : ['#ff7e5f', '#feb47b']}
-      style={styles.container}>
+    <View style={[styles.container, darkMode && styles.containerDark]}>
+      <Header />
       <FlatList
         data={users}
         keyExtractor={item => item.id}
         renderItem={({item}) => (
           <TouchableOpacity
             style={styles.userCard}
-            onPress={() => navigation.navigate('ChatScreen', {user: item})}>
+            onPress={() => navigation.navigate('Chat', {user: item})}>
             <Image
               source={{
                 uri:
@@ -102,7 +141,7 @@ const HomeScreen = ({navigation}) => {
                 <Text style={styles.lastMessage} numberOfLines={1}>
                   {item.lastMessage}
                 </Text>
-              )} 
+              )}
             </View>
             {item.unreadCount > 0 && (
               <View style={styles.unreadBadge}>
@@ -112,19 +151,20 @@ const HomeScreen = ({navigation}) => {
           </TouchableOpacity>
         )}
       />
-      <TouchableOpacity style={styles.switchButton} onPress={toggleTheme}>
-        <LinearGradient
-          colors={['#4c669f', '#3b5998', '#192f6a']}
-          style={styles.buttonGradient}>
-          <Text style={styles.buttonText}>Toggle Theme</Text>
-        </LinearGradient>
-      </TouchableOpacity>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, paddingVertical: 40},
+  container: {flex: 1, backgroundColor: '#fff'},
+  containerDark: {backgroundColor: '#121212'},
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#007bff',
+  },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -138,8 +178,8 @@ const styles = StyleSheet.create({
   },
   profileImage: {width: 60, height: 60, borderRadius: 30, marginRight: 15},
   userInfo: {flex: 1},
-  userName: {fontSize: 16, fontWeight: 'bold', color: '#000'},
-  lastMessage: {fontSize: 14, color: '#000'},
+  userName: {fontSize: 16, fontWeight: 'bold'},
+  lastMessage: {fontSize: 14, color: '#666'},
   typingIndicator: {fontSize: 14, fontStyle: 'italic', color: '#007bff'},
   unreadBadge: {
     backgroundColor: 'red',
@@ -148,23 +188,8 @@ const styles = StyleSheet.create({
     minWidth: 25,
     alignItems: 'center',
   },
-  unreadText: {color: '#000', fontWeight: 'bold'},
-  switchButton: {
-    marginTop: 20,
-    alignSelf: 'center',
-    borderRadius: 25,
-    overflow: 'hidden',
-  },
-  buttonGradient: {
-    padding: 15,
-    alignItems: 'center',
-    borderRadius: 25,
-  },
-  buttonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
+  unreadText: {color: '#fff', fontWeight: 'bold'},
 });
 
 export default HomeScreen;
+

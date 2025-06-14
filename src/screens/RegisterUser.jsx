@@ -1,153 +1,195 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Button,
+  ActivityIndicator,
+  StyleSheet,
+  Alert,
+  ScrollView,
+} from 'react-native';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import CustomTextInput from '../components/CustomTextInput';
 
-const SignupScreen = ({ navigation }) => {
+const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [profileImage, setProfileImage] = useState(null);
+  const [city, setCity] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [imageUri, setImageUri] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const pickImage = () => {
-    launchImageLibrary({ mediaType: 'photo' }, (response) => {
-      if (!response.didCancel && !response.error && response.assets && response.assets.length > 0) {
-        setProfileImage(response.assets[0].uri);
+    launchImageLibrary({ mediaType: 'photo' }, response => {
+      if (response.assets && response.assets.length > 0) {
+        setImageUri(response.assets[0].uri);
       }
     });
   };
 
+  const uploadImage = async (uid) => {
+    if (!imageUri) return null;
+    const reference = storage().ref(`/profile_pictures/${uid}.jpg`);
+    await reference.putFile(imageUri);
+    return await reference.getDownloadURL();
+  };
+
   const handleRegister = async () => {
     const trimmedName = name.trim();
-    const trimmedPhoneNumber = phoneNumber.trim();
+    const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
+    const trimmedCity = city.trim();
+    const trimmedPhoneNumber = phoneNumber.trim();
 
-    if (!trimmedName || !trimmedPhoneNumber || !trimmedPassword) {
+    if (!trimmedName || !trimmedEmail || !trimmedPassword || !trimmedCity || !trimmedPhoneNumber) {
       Alert.alert('Error', 'All fields are required!');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      Alert.alert('Error', 'Please enter a valid email address.');
+      return;
+    }
+
+    if (trimmedPassword.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters long.');
+      return;
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(trimmedPhoneNumber)) {
+      Alert.alert('Error', 'Please enter a valid 10-digit phone number.');
       return;
     }
 
     setLoading(true);
 
-    // Simulate registration process
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const userCredential = await auth().createUserWithEmailAndPassword(trimmedEmail, trimmedPassword);
+      const userId = userCredential.user.uid;
+      const imageUrl = await uploadImage(userId);
+
+      await firestore().collection('users').doc(userId).set({
+        name: trimmedName,
+        email: trimmedEmail,
+        city: trimmedCity,
+        phoneNumber: trimmedPhoneNumber,
+        imageUrl,
+        status: 'Online',
+        lastSeen: Date.now(),
+      });
+
+      console.log('User registered successfully');
       Alert.alert('Success', 'Registration successful!');
       navigation.navigate('Login');
-    }, 2000);
+    } catch (error) {
+      console.error('Error registering user:', error);
+
+      if (error.code === 'auth/email-already-in-use') {
+        Alert.alert('Error', 'This email is already in use.');
+      } else if (error.code === 'auth/invalid-email') {
+        Alert.alert('Error', 'Invalid email format.');
+      } else {
+        Alert.alert('Error', 'Failed to register. Please try again.');
+      }
+    }
+
+    setLoading(false);
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>Create Account</Text>
-
-      <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-        {profileImage ? (
-          <Image source={{ uri: profileImage }} style={styles.profileImage} />
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Register</Text>
+      <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.image} />
         ) : (
-          <View style={styles.placeholderImage}>
-            <Text style={styles.imagePickerText}>Upload Profile Picture</Text>
-          </View>
+          <Text style={styles.addPhotoText}>Add Photo</Text>
         )}
       </TouchableOpacity>
-
       <CustomTextInput
-        label="Your Name"
-        placeholder="Enter your name"
+        label="Name"
+        placeholder="Name"
         value={name}
         onChangeText={setName}
       />
-
       <CustomTextInput
-        label="Phone Number"
-        placeholder="Enter your phone number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-        keyboardType="numeric"
+        label="Email"
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
       />
-
       <CustomTextInput
         label="Password"
-        placeholder="Enter password"
+        placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
-
-      <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Sign Up</Text>
-        )}
-      </TouchableOpacity>
-
-      <Text style={styles.registerText}>
-        Already have an account?{' '}
-        <Text style={styles.registerLink} onPress={() => navigation.navigate('Login')}>
-          Login
-        </Text>
-      </Text>
+      <CustomTextInput
+        label="City"
+        placeholder="City"
+        value={city}
+        onChangeText={setCity}
+      />
+      <CustomTextInput
+        label="Phone Number"
+        placeholder="Phone Number"
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+        keyboardType="phone-pad"
+      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#000" />
+      ) : (
+        <Button title="Register" onPress={handleRegister} />
+      )}
+      <Button title="Login" onPress={()=>navigation.navigate("Login")} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+    backgroundColor: '#f5f5f5',
+    // alignItems: 'center',
   },
-  heading: {
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    textAlign: 'center',
+    alignSelf: 'center',
   },
   imagePicker: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  placeholderImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
     backgroundColor: '#ddd',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 20,
+    alignSelf: 'center',
   },
-  button: {
-    backgroundColor: '#007bff',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonText: {
-    color: '#fff',
+  addPhotoText: {
+    color: '#555',
     fontSize: 16,
-    fontWeight: 'bold',
   },
-  registerText: {
-    marginTop: 15,
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  registerLink: {
-    color: '#007bff',
-    fontWeight: 'bold',
-  },
-  imagePickerText: {
-    color: '#666',
-    fontSize: 14,
-    textAlign: 'center',
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
 });
 
-export default SignupScreen;
+export default RegisterScreen;
