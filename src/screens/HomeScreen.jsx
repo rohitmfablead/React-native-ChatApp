@@ -105,7 +105,10 @@ const HomeScreen = ({navigation}) => {
 
   if (loading) {
     return (
-      <ActivityIndicator size="large" color="#007bff" style={styles.loading} />
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <ActivityIndicator size="large" color="#007bff" />
+        <Text style={styles.title}>Loading users...</Text>
+        </View>
     );
   }
 

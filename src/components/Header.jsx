@@ -2,36 +2,60 @@ import {
   Image,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from 'react-native';
 import React from 'react';
 import {useNavigation} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Header = ({isTyping, userStatus, user, profileImage}) => {
+  const navigation = useNavigation();
+
+  const handleLogout = async () => {
+    try {
+      const user = await AsyncStorage.getItem('user');
+      if (user) {
+        Alert.alert('Logout', 'Are you sure you want to logout?', [
+          {text: 'Cancel', style: 'cancel'},
+          {
+            text: 'Logout',
+            onPress: async () => {
+              await AsyncStorage.removeItem('user'); 
+              navigation.replace('Login'); 
+            },
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   if (!user) {
     return (
       <View style={styles.container1}>
+        <View style={{width: 24}} />
         <Text style={styles.backText}>Chat List & All Users</Text>
+        <TouchableOpacity onPress={handleLogout}>
+          <Image
+            source={{
+              uri: 'https://cdn-icons-png.flaticon.com/512/1828/1828479.png',
+            }}
+            style={styles.logoutIcon}
+          />
+        </TouchableOpacity>
       </View>
     );
   }
-  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
         onPress={() => navigation.goBack()}
         style={styles.backButton}>
-        <Text
-          style={{
-            fontSize: 50,
-
-            fontWeight: 'bold',
-            color: '#007bff',
-          }}>
-          ←
-        </Text>
+        <Text style={styles.backArrow}>←</Text>
       </TouchableOpacity>
       {profileImage && (
         <View style={styles.imageContainer}>
@@ -40,7 +64,6 @@ const Header = ({isTyping, userStatus, user, profileImage}) => {
       )}
       <View style={styles.textContainer}>
         <Text style={styles.header}>{user || 'Unknown'}</Text>
-
         {isTyping ? (
           <Text style={styles.typingText}>typing...</Text>
         ) : (
@@ -65,23 +88,21 @@ const styles = StyleSheet.create({
   container1: {
     width: '100%',
     height: 80,
-    backgroundColor: '#fff',
-
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
+    backgroundColor: '#fff',
   },
   backText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#007bff',
   },
-  chatText: {
-    fontSize: 18,
+  backArrow: {
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-    // flex: 1,
+    color: '#007bff',
   },
   imageContainer: {
     width: 50,
@@ -117,5 +138,10 @@ const styles = StyleSheet.create({
     marginRight: 10,
     alignItems: 'center',
     marginBottom: 25,
+  },
+  logoutIcon: {
+    width: 24,
+    height: 24,
+    tintColor: '#000',
   },
 });
