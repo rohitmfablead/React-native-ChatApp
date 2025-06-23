@@ -9,6 +9,7 @@ import {
 import auth from '@react-native-firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomTextInput from '../components/CustomTextInput';
+import CustomButton from '../components/CustomButton';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -56,13 +57,24 @@ const LoginScreen = ({ navigation }) => {
       {loading ? (
         <ActivityIndicator size="large" color="#000" />
       ) : (
-        <Button title="Login" onPress={handleLogin} />
+        <CustomButton 
+        title={"Login"}
+        onPress={handleLogin}
+        backgroundColor="#3498db" 
+        />
+       
       )}
-      <Text
-        style={styles.registerText}
-        onPress={() => navigation.navigate('Register')}>
-        Don't have an account? Register
-      </Text>
+      <View style={{ marginVertical: 10 }}>
+        <Text>
+          Don't have an account?{' '}
+          <Text
+            style={styles.registerText}
+            onPress={() => navigation.navigate('Register')}>
+            Register
+          </Text>
+        </Text>
+        </View>
+    
     </View>
   );
 };
@@ -70,14 +82,18 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingVertical:20,
+    paddingHorizontal: 20,
     backgroundColor: '#f5f5f5',
+    // alignItems: 'center',
+    // justifyContent: 'center',
     
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    textAlign: 'center',
   },
   error: {
     color: 'red',

@@ -34,10 +34,36 @@ const ChatScreen = ({route}) => {
         fileUrl,
         timestamp: firestore.FieldValue.serverTimestamp(),
         read: false,
+        type: 'file', // optional: helps distinguish file messages
       };
 
       const chatRef = firestore().collection('chats').doc(chatId);
       await chatRef.collection('messages').add(messageData);
+
+      // Update chat metadata like last message
+      await firestore().runTransaction(async transaction => {
+        const chatDoc = await transaction.get(chatRef);
+        if (chatDoc.exists) {
+          const unreadCount = chatDoc.data()[`unreadCount_${user.id}`] || 0;
+          transaction.update(chatRef, {
+            lastMessage: '📎 File', // or show file name if you want
+            lastMessageTimestamp: firestore.FieldValue.serverTimestamp(),
+            [`unreadCount_${user.id}`]: unreadCount + 1,
+            [`typing_${currentUser.uid}`]: false,
+            lastMessageSenderId: currentUser.uid,
+            [`lastMessageRead_${user.id}`]: false,
+          });
+        } else {
+          transaction.set(chatRef, {
+            lastMessage: '📎 File',
+            lastMessageTimestamp: firestore.FieldValue.serverTimestamp(),
+            [`unreadCount_${user.id}`]: 1,
+            [`typing_${currentUser.uid}`]: false,
+            lastMessageSenderId: currentUser.uid,
+            [`lastMessageRead_${user.id}`]: false,
+          });
+        }
+      });
     } catch (error) {
       console.error('Error sending file:', error);
     } finally {
@@ -112,14 +138,39 @@ const ChatScreen = ({route}) => {
       .collection('users')
       .doc(user.id)
       .onSnapshot(doc => {
-        if (doc.exists) {
-          setUserStatus(
-            doc.data().online
-              ? 'Online'
-              : 'Last seen: ' +
-                  new Date(doc?.data().lastSeen?.toDate()).toLocaleTimeString(),
-          );
-        }
+      const lastSeen = doc.data().lastSeen?.toDate();
+
+if (doc.data().online) {
+  setUserStatus('Online');
+} else if (lastSeen) {
+  const now = new Date();
+  const lastSeenDate = new Date(lastSeen);
+
+  const isToday =
+    now.toDateString() === lastSeenDate.toDateString();
+  const isYesterday =
+    new Date(now.setDate(now.getDate() - 1)).toDateString() === lastSeenDate.toDateString();
+
+  let formattedTime = lastSeenDate.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  if (isToday) {
+    setUserStatus(`Last seen today at ${formattedTime}`);
+  } else if (isYesterday) {
+    setUserStatus(`Last seen yesterday at ${formattedTime}`);
+  } else {
+    let formattedDate = lastSeenDate.toLocaleDateString([], {
+      day: 'numeric',
+      month: 'short',
+    });
+    setUserStatus(`Last seen on ${formattedDate} at ${formattedTime}`);
+  }
+} else {
+  setUserStatus('Offline');
+}
+
       });
 
     return () => {
@@ -188,7 +239,7 @@ const ChatScreen = ({route}) => {
 
   return (
     <View style={styles.container}>
-       {uploading && (
+      {uploading && (
         <View style={styles.uploadingOverlay}>
           <ActivityIndicator size="large" color="#fff" />
         </View>

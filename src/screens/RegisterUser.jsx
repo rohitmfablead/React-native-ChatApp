@@ -15,6 +15,7 @@ import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import CustomTextInput from '../components/CustomTextInput';
+import CustomButton from '../components/CustomButton';
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -150,9 +151,26 @@ const RegisterScreen = ({ navigation }) => {
       {loading ? (
         <ActivityIndicator size="large" color="#000" />
       ) : (
-        <Button title="Register" onPress={handleRegister} />
+        <CustomButton
+        title="Sign Up" 
+        onPress={handleRegister}
+        backgroundColor="#3498db" 
+        textColor="#fff" 
+      />
+        
       )}
-      <Button title="Login" onPress={()=>navigation.navigate("Login")} />
+      <View style={{ marginVertical: 10, alignItems: 'left' }}>
+        <Text>
+          Already have an account?{' '}
+          <Text
+            style={{ color: '#3498db', fontWeight: 'bold' }}
+            onPress={()=>navigation.navigate("Login")}
+          >
+            Login
+          </Text>
+        </Text>
+      </View>
+     
     </ScrollView>
   );
 };
@@ -166,9 +184,9 @@ const styles = StyleSheet.create({
     // alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginVertical: 20,
     alignSelf: 'center',
   },
   imagePicker: {

@@ -1,5 +1,5 @@
 // ChatMessages.js
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -11,16 +11,15 @@ import {
   Pressable,
   Dimensions,
 } from 'react-native';
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
-const ChatMessages = ({ messages, currentUser, flatListRef }) => {
+const ChatMessages = ({messages, currentUser, flatListRef}) => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImageUri, setPreviewImageUri] = useState('');
 
-console.log("object",previewImageUri)
+  console.log('object', previewImageUri);
 
-
-  const openPreview = (uri) => {
+  const openPreview = uri => {
     setPreviewImageUri(uri);
     setPreviewVisible(true);
   };
@@ -30,14 +29,14 @@ console.log("object",previewImageUri)
     setPreviewImageUri('');
   };
 
-  const renderMessage = ({ item }) => {
+  const renderMessage = ({item}) => {
     const isCurrentUser = item.senderId === currentUser.uid;
-    let statusIcon = '✓'; // Sent
+    let statusIcon = '✓';
 
     if (item.read) {
-      statusIcon = '✓✓'; // Seen
+      statusIcon = '✓✓';
     } else if (item.delivered) {
-      statusIcon = '✓✓'; // Delivered but not seen
+      statusIcon = '✓✓';
     }
 
     const timestamp = item.timestamp
@@ -51,13 +50,21 @@ console.log("object",previewImageUri)
       const [imageLoaded, setImageLoaded] = useState(false);
 
       if (item.text) {
-        return <Text style={styles.messageText}>{item.text}</Text>;
+        return (
+          <Text
+            style={[
+              styles.messageText,
+              {color: isCurrentUser ? '#fff' : '#000'},
+            ]}>
+            {item.text}
+          </Text>
+        );
       } else if (item.fileUrl) {
         if (item.fileUrl.match(/\.(jpeg|jpg|gif|png)$/)) {
           return (
             <TouchableOpacity onPress={() => openPreview(item.fileUrl)}>
               <Image
-                source={{ uri: item.fileUrl }}
+                source={{uri: item.fileUrl}}
                 style={[styles.image, !imageLoaded && styles.blurredImage]}
                 resizeMode="contain"
                 onLoadEnd={() => setImageLoaded(true)}
@@ -67,10 +74,7 @@ console.log("object",previewImageUri)
         } else {
           return (
             <TouchableOpacity onPress={() => openPreview(item.fileUrl)}>
-              <Image
-                style={styles.image}
-                source={{ uri: item.fileUrl }}
-              />
+              <Image style={styles.image} source={{uri: item.fileUrl}} />
             </TouchableOpacity>
           );
         }
@@ -83,17 +87,15 @@ console.log("object",previewImageUri)
         style={[
           styles.messageContainer,
           isCurrentUser ? styles.myMessage : styles.otherMessage,
-        ]}
-      >
+        ]}>
         <MessageContent />
-        <Text style={styles.timestamp}>{timestamp}</Text>
+        <Text
+          style={[styles.timestamp, {color: isCurrentUser ? '#fff' : '#000'}]}>
+          {timestamp}
+        </Text>
         {isCurrentUser && (
           <Text
-            style={[
-              styles.readIndicator,
-              item.read && styles.seenIndicator,
-            ]}
-          >
+            style={[styles.readIndicator, item.read && styles.seenIndicator]}>
             {statusIcon}
           </Text>
         )}
@@ -107,7 +109,7 @@ console.log("object",previewImageUri)
         ref={flatListRef}
         data={messages}
         renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
       />
 
@@ -116,7 +118,7 @@ console.log("object",previewImageUri)
         <View style={styles.modalBackground}>
           <Pressable style={styles.modalCloseArea} onPress={closePreview}>
             <Image
-              source={{ uri: previewImageUri }}
+              source={{uri: previewImageUri}}
               style={styles.fullImage}
               resizeMode="contain"
             />
@@ -130,20 +132,34 @@ console.log("object",previewImageUri)
 const styles = StyleSheet.create({
   listContent: {
     padding: 10,
+    paddingBottom: 20,
   },
   messageContainer: {
     padding: 10,
-    borderRadius: 10,
-    marginBottom: 5,
-    maxWidth: '70%',
+    marginBottom: 10,
+    borderRadius: 12,
+    maxWidth: '75%',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 2},
+    shadowRadius: 4,
+    elevation: 3,
   },
   myMessage: {
     alignSelf: 'flex-end',
     backgroundColor: '#007bff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 4,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
   },
   otherMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: '#ccc',
+    backgroundColor: '#e5e5ea',
+    borderTopRightRadius: 16,
+    borderTopLeftRadius: 4,
+    borderBottomRightRadius: 16,
+    borderBottomLeftRadius: 16,
   },
   messageText: {
     color: '#fff',
@@ -152,26 +168,25 @@ const styles = StyleSheet.create({
   image: {
     width: 200,
     height: 200,
-    borderRadius: 8,
+    borderRadius: 10,
+    backgroundColor: '#ddd',
   },
   blurredImage: {
-    opacity: 0.4,
-    blurRadius: 10, // iOS only
+    opacity: 0.3,
   },
   timestamp: {
     fontSize: 12,
-    color: '#ddd',
-    marginTop: 2,
+    color: '#eee',
+    marginTop: 5,
     textAlign: 'right',
   },
   readIndicator: {
     fontSize: 12,
-    color: '#ddd',
-    marginTop: 2,
+    color: '#ccc',
     textAlign: 'right',
   },
   seenIndicator: {
-    color: '#00ff00',
+    color: '#4cd964', // iMessage-style green for "seen"
   },
   modalBackground: {
     flex: 1,
@@ -180,7 +195,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fullImage: {
-    width: width,   // 90% of screen width
+    width: width,
     height: height,
   },
   modalCloseArea: {

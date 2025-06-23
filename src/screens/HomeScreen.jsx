@@ -1,4 +1,3 @@
-
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -14,12 +13,12 @@ import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../components/Header';
 
-
 const HomeScreen = ({navigation}) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
+
 
   useEffect(() => {
     const getTheme = async () => {
@@ -54,7 +53,10 @@ const HomeScreen = ({navigation}) => {
           ...doc.data(),
         }));
 
-        userList = userList.filter(user => user.email !== currentUser.email);
+        userList = userList.filter(
+          user => user.email && user.email !== currentUser.email,
+        );
+
         setUsers(userList);
 
         const chatListeners = userList.map(user => {
@@ -108,15 +110,9 @@ const HomeScreen = ({navigation}) => {
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
         <ActivityIndicator size="large" color="#007bff" />
         <Text style={styles.title}>Loading users...</Text>
-        </View>
+      </View>
     );
   }
-
-  const toggleTheme = async () => {
-    const newTheme = darkMode ? 'light' : 'dark';
-    await AsyncStorage.setItem('theme', newTheme);
-    setDarkMode(!darkMode);
-  };
 
   return (
     <View style={[styles.container, darkMode && styles.containerDark]}>
@@ -153,6 +149,17 @@ const HomeScreen = ({navigation}) => {
             )}
           </TouchableOpacity>
         )}
+        ListEmptyComponent={
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginTop: 100,
+            }}>
+            <Text style={styles.noUsersText}>No users found</Text>
+          </View>
+        }
       />
     </View>
   );
@@ -192,7 +199,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   unreadText: {color: '#fff', fontWeight: 'bold'},
+  noUsersText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 18,
+    color: '#999',
+  },
 });
 
 export default HomeScreen;
-

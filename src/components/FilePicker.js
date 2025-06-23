@@ -1,6 +1,7 @@
 import React from 'react';
-import {Button} from 'react-native';
+import {TouchableOpacity, Text, StyleSheet} from 'react-native';
 import {launchImageLibrary} from 'react-native-image-picker';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const FilePicker = ({onFileSelect}) => {
   const selectFile = () => {
@@ -21,7 +22,22 @@ const FilePicker = ({onFileSelect}) => {
     });
   };
 
-  return <Button title="Pick a File" onPress={selectFile} />;
+  return (
+    <TouchableOpacity style={styles.button} onPress={selectFile}>
+      <Icon name="attach" size={22} color="#007bff" />
+    </TouchableOpacity>
+  );
 };
 
 export default FilePicker;
+
+const styles = StyleSheet.create({
+  button: {
+    marginHorizontal: 5,
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

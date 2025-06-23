@@ -9,7 +9,7 @@ import {
 import React from 'react';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import Icon from 'react-native-vector-icons/Ionicons';
 const Header = ({isTyping, userStatus, user, profileImage}) => {
   const navigation = useNavigation();
 
@@ -22,8 +22,8 @@ const Header = ({isTyping, userStatus, user, profileImage}) => {
           {
             text: 'Logout',
             onPress: async () => {
-              await AsyncStorage.removeItem('user'); 
-              navigation.replace('Login'); 
+              await AsyncStorage.removeItem('user');
+              navigation.replace('Login');
             },
           },
         ]);
@@ -39,12 +39,7 @@ const Header = ({isTyping, userStatus, user, profileImage}) => {
         <View style={{width: 24}} />
         <Text style={styles.backText}>Chat List & All Users</Text>
         <TouchableOpacity onPress={handleLogout}>
-          <Image
-            source={{
-              uri: 'https://cdn-icons-png.flaticon.com/512/1828/1828479.png',
-            }}
-            style={styles.logoutIcon}
-          />
+          <Icon name="log-out-outline" size={24} color="#000" />
         </TouchableOpacity>
       </View>
     );
@@ -55,7 +50,7 @@ const Header = ({isTyping, userStatus, user, profileImage}) => {
       <TouchableOpacity
         onPress={() => navigation.goBack()}
         style={styles.backButton}>
-        <Text style={styles.backArrow}>←</Text>
+        <Icon name="arrow-back" size={26} color="#007bff" />
       </TouchableOpacity>
       {profileImage && (
         <View style={styles.imageContainer}>
@@ -137,7 +132,7 @@ const styles = StyleSheet.create({
   backButton: {
     marginRight: 10,
     alignItems: 'center',
-    marginBottom: 25,
+    // marginBottom: 25,
   },
   logoutIcon: {
     width: 24,

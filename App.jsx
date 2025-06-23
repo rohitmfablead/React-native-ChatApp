@@ -11,6 +11,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+
 const Stack = createStackNavigator();
 
 const App = () => {
@@ -57,6 +58,7 @@ const App = () => {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} />
+  
       </Stack.Navigator>
     </NavigationContainer>
   );
